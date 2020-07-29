@@ -1,6 +1,4 @@
 import { Component, Input, OnInit, Inject } from '@angular/core';
-//declare var faceapi: any;
-////"./node_modules/face-api.js/dist/face-api.min.js"
 import * as faceapi from 'face-api.js';
 import { Observable } from 'rxjs';
 import * as canvas from 'canvas';
@@ -26,8 +24,6 @@ faceapi.env.monkeyPatch({
 export class AppComponent {
   title = 'face-match';
 
-  private expressions: Observable<any[]>;
- 
   public loading: boolean;
  
 
@@ -123,11 +119,9 @@ export class AppComponent {
   }
 
 
-  
   public async detectFaces(input: HTMLImageElement, canvas: HTMLCanvasElement) {
     this.counter+=1;
     this.htmlImageEl = <HTMLImageElement>this.doc.getElementById("inputImage");
-
 
     let width = input['width'];
     let height = input['height'];
@@ -136,12 +130,14 @@ export class AppComponent {
     //resize the canvas to match the input image dimension
     faceapi.matchDimensions(canvas, displaySize)
 
-    let fullFaceDescriptions = await faceapi.detectAllFaces(input).withFaceLandmarks().withFaceDescriptors().withFaceExpressions()
+    let fullFaceDescriptions = await faceapi.detectAllFaces(input).withFaceLandmarks().withFaceDescriptors()
 
     //The returned bounding boxes and landmark positions are relative to the original image / media size. In case the displayed image size does not correspond to the original image size you can simply resize 
     fullFaceDescriptions = faceapi.resizeResults(fullFaceDescriptions, input)
-
-   // faceapi.draw.drawDetections(canvas, fullFaceDescriptions)
+    if (fullFaceDescriptions.length === 0) {
+      alert(`No faces detected for the images uploaded
+please upload a photo with your face visible clearly!`)      
+    }
 
     return fullFaceDescriptions;
   }
@@ -150,21 +146,21 @@ export class AppComponent {
   public async faceRecognition(fullFaceDescriptions: faceapi.WithFaceExpressions<faceapi.WithFaceDescriptor<faceapi.WithFaceLandmarks<{
     detection: faceapi.FaceDetection;
   }, faceapi.FaceLandmarks68>>>[], canvas: HTMLCanvasElement, mode: string) {
-    const labels = ['Person']
-    const labeledFaceDescriptors = await Promise.all(
-      labels.map(async label => {
-        // Second image being used to compare
+   
+        // Second being used to compared to the first image which set as the reference image
         let imageSecond: HTMLImageElement = <HTMLImageElement>this.doc.getElementById("inputImageSecond")
 
         // detect the face with the highest score in the image and compute it's landmarks and face descriptor
        const fullFaceDescription = await faceapi.detectSingleFace(imageSecond).withFaceLandmarks().withFaceDescriptor()
         if (!fullFaceDescription) {
-          console.log(`no faces detected for ${label}`)
+          alert(`No faces detected for the images uploaded
+please upload a photo with your face visible clearly!`)
+          console.log(`no faces detected for the images uploaded`)
+          return
         }
         const faceDescriptors = [fullFaceDescription.descriptor]
-        return new faceapi.LabeledFaceDescriptors(label, faceDescriptors)
-      })
-    )
+        const labeledFaceDescriptors = new faceapi.LabeledFaceDescriptors('',faceDescriptors)
+
     //match the face descriptors of the detected faces from our input image to our reference data
     // 0.6 is a good distance threshold value to judge
     // whether the descriptors match or not
@@ -174,26 +170,18 @@ export class AppComponent {
     const faceMatcher = new faceapi.FaceMatcher(labeledFaceDescriptors, maxDescriptorDistance)
 
     const results = fullFaceDescriptions.map(function (fd) {
-      return { faceMatcher: faceMatcher.findBestMatch(fd['descriptor']), faceExpressions: fd['expressions'] }
+      return { faceMatcher: faceMatcher.findBestMatch(fd['descriptor']) }
     })
 
     results.forEach((bestMatch, i) => {
-      let expressions = bestMatch['faceExpressions'];
       let recognize = bestMatch['faceMatcher'].toString()
-      let max = Math.max.apply(null, Object.values(expressions))
-
       const box = fullFaceDescriptions[i]['detection']['box']
       let text = ""
       //Call this function to extract and display face
         this.extractFaceFromBox(<HTMLImageElement>this.doc.getElementById("inputImage"), fullFaceDescriptions[i]['detection']['box']);
         this.extractFaceFromBox(<HTMLImageElement>this.doc.getElementById("inputImageSecond"), fullFaceDescriptions[i]['detection']['box']);
-     
-      if (mode === "expression") {
-        text = recognize + ":" + this.getKeyByValue((expressions), max);
-        this.toastr.success(this.getKeyByValue((expressions), max) + " " + recognize);
-      } else {
+   
         text = recognize;
-      }
 
       let outputShowData:HTMLImageElement = <HTMLImageElement>this.doc.getElementById("outputImage");
       let para =document.createElement('p');
@@ -215,7 +203,8 @@ export class AppComponent {
         border: 1px solid black;
         border-radius: 20px;
         margin-left: -20px;
-        background-color: rgb(234, 96, 93);;
+        background-color: rgb(234, 96, 93);
+        font-weight:bold;
         `
                
         if(media320.matches){
@@ -289,6 +278,7 @@ export class AppComponent {
         border-radius: 20px;
         margin-left: -20px;
         background-color:rgb(178, 255, 89);
+        font-weight:bold;
         `
         
         if(media320.matches){
@@ -352,7 +342,6 @@ export class AppComponent {
 
       //draw the bounding boxes together with their labels into a canvas to display the results
       const drawBox = new faceapi.draw.DrawBox(box, { label: text })
-     // drawBox.draw(canvas)
      
     })
   }
