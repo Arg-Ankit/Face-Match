@@ -1,0 +1,80 @@
+
+  <!-- <mat-spinner [diameter]="30" *ngIf="loading" mode="determinate" class="custom-spinner"></mat-spinner>-->
+  <mat-spinner class='spinner' *ngIf="isDataLoading"></mat-spinner>
+  <!--the pop to show the result of face match -->
+<mat-card id="card-edit" >
+  <mat-card-header  class="content modal-header" >
+      <mat-card-title><h1>Face Match</h1></mat-card-title>
+  </mat-card-header>
+  <mat-card-content id="outputImage">
+  </mat-card-content>
+  <hr>
+  <mat-card-actions>
+    <div class="content closeModalContainer">
+        <button class='closeModal' mat-raised-button color="primary" (click)="onClose()">Close</button>    
+      </div>
+      </mat-card-actions>
+  </mat-card>
+  
+  <div fxLayout="column" id='faceMatchDOM'  fxLayoutGap="10px">
+  <mat-card >
+        <mat-card-header  class="content card-header" >
+            <mat-card-title><h1>Face Match</h1></mat-card-title>
+        </mat-card-header>
+        <mat-card-content  >
+        
+            <div class="content terminal-super-container" fxFlex>
+               
+                <div class='terminal-container' fxLayout="column" fxLayoutAlign="center" fxLayoutGap="10px">
+                  <label class='file-label' for='input1'><strong>Upload your ID card </strong></label>
+                  <br>
+                  <button type="button" class='fileButton' mat-raised-button (click)="fileInput.click()">Choose File</button>
+                  <input hidden
+                    class="file-input"
+                    type="file"
+                    name="file"
+                    id='input1'
+                    #fileInput
+                    (change)="onChange(fileInput.files[0])"
+                  /> 
+                  <div class="terminal">                
+                      <img [src]="imageUrl" id='inputImage'/>
+                      <canvas style="padding-top: 30px" class="overlay" id="overlayImage"> </canvas>
+                  </div>
+                  <br>
+                  <label class='file-label' for='input2'><strong>Upload your image </strong></label> 
+                  <br>
+                  <button type="button" class='fileButton' mat-raised-button (click)="fileInputSecond.click()">Choose File</button>
+                <input hidden
+                class="file-input"
+                type="file"
+                name="file"
+                id='input2'
+                #fileInputSecond
+                (change)="onChangeSecond(fileInputSecond.files[0])"
+              />
+                  <div class="terminal">                
+                    <img [src]="imageUrlSecond" id='inputImageSecond'/>
+                    <canvas style="padding-top: 30px" class="overlay" id="overlayImageSecond"> </canvas>
+                </div>
+                <mat-progress-bar *ngIf="loading" mode="query" color='primary'></mat-progress-bar>
+                
+
+            </div>
+          </div>
+      
+        </mat-card-content>
+
+        <mat-card-actions>
+          <div class="content-button-action">
+             <button class='matchButton' mat-raised-button color="primary" (click)="onDetectFaces('reco')" [disabled]="loading">Face Match</button>
+          </div>
+
+        </mat-card-actions>
+
+  </mat-card>
+  </div>
+
+  
+        
+ 
